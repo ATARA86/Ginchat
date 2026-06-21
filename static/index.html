@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>即时通讯系统</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="authView">
+            <div class="login-box">
+                <ul class="nav nav-tabs justify-content-center mb-4" id="authTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#loginTab">
+                            <i class="fas fa-sign-in-alt"></i> 登录
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#registerTab">
+                            <i class="fas fa-user-plus"></i> 注册
+                        </a>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="loginTab">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title text-center mb-4">用户登录</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">用户名</label>
+                                    <input type="text" class="form-control" id="loginName" placeholder="输入用户名">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">密码</label>
+                                    <input type="password" class="form-control" id="loginPassword" placeholder="输入密码">
+                                </div>
+                                <button class="btn btn-primary w-100" onclick="doLogin()">
+                                    <i class="fas fa-sign-in-alt"></i> 登录
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="registerTab">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title text-center mb-4">用户注册</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">用户名</label>
+                                    <input type="text" class="form-control" id="regName" placeholder="输入用户名">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">密码</label>
+                                    <input type="password" class="form-control" id="regPassword" placeholder="输入密码">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">确认密码</label>
+                                    <input type="password" class="form-control" id="regRepassword" placeholder="再次输入密码">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">手机号</label>
+                                    <input type="text" class="form-control" id="regPhone" placeholder="输入手机号（可选）">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">邮箱</label>
+                                    <input type="email" class="form-control" id="regEmail" placeholder="输入邮箱（可选）">
+                                </div>
+                                <button class="btn btn-success w-100" onclick="doRegister()">
+                                    <i class="fas fa-user-plus"></i> 注册
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="chatView" style="display: none;">
+            <div class="chat-container">
+                <div class="current-user d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <span class="badge bg-primary" id="currentUserBadge">当前用户: -</span>
+                        <span class="badge ms-2" id="connectionStatus">未连接</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-outline-primary btn-sm me-2" onclick="showAddFriendModal()">
+                            <i class="fas fa-user-plus"></i> 添加好友
+                        </button>
+                        <button class="btn btn-outline-success btn-sm me-2" onclick="showCreateGroupModal()">
+                            <i class="fas fa-users"></i> 创建群
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm me-2" onclick="showJoinGroupModal()">
+                            <i class="fas fa-user-plus"></i> 加入群
+                        </button>
+                        <button class="btn btn-outline-info btn-sm me-2" onclick="showEditProfileModal()">
+                            <i class="fas fa-user-edit"></i> 编辑资料
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> 退出
+                        </button>
+                    </div>
+                </div>
+
+                <div class="chat-box">
+                    <div class="chat-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-comments"></i> 聊天系统</h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <select class="form-select w-auto" id="groupSelect" onchange="selectGroup(this.value)">
+                                <option value="">选择群聊</option>
+                            </select>
+                            <select class="form-select w-auto" id="targetSelect" onchange="selectUser(parseInt(this.value), this.options[this.selectedIndex].text)">
+                                <option value="">选择用户</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="groupMembersDisplay" class="text-center py-1 bg-light"></div>
+                    <div class="d-flex" style="flex: 1; overflow: hidden;">
+                        <div class="user-list" id="userList"></div>
+                        <div class="message-area">
+                            <div class="message-list" id="messageList"></div>
+                            <div class="chat-input">
+                                <input type="text" class="form-control" id="messageInput" placeholder="输入消息..." onkeypress="handleKeyPress(event)">
+                                <label class="btn btn-outline-secondary mb-0 me-2" for="imageInput">
+                                    <i class="fas fa-image"></i>
+                                </label>
+                                <input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                                <button class="btn btn-primary" onclick="sendMessage()">
+                                    <i class="fas fa-paper-plane"></i> 发送
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+        <div id="toastContainer"></div>
+    </div>
+
+    <div class="modal fade" id="addFriendModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus"></i> 添加好友</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">选择要添加的好友</label>
+                        <select class="form-select" id="friendSelect">
+                            <option value="">加载中...</option>
+                        </select>
+                    </div>
+                    <div id="selectedFriendInfo" class="text-muted small"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="doAddFriend()">
+                        <i class="fas fa-plus"></i> 添加
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editProfileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-edit"></i> 编辑资料</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">用户名</label>
+                        <input type="text" class="form-control" id="editName" placeholder="输入用户名">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">密码</label>
+                        <input type="password" class="form-control" id="editPassword" placeholder="输入新密码（不修改请留空）">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">手机号</label>
+                        <input type="text" class="form-control" id="editPhone" placeholder="输入手机号">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">邮箱</label>
+                        <input type="email" class="form-control" id="editEmail" placeholder="输入邮箱">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="doUpdateProfile()">
+                        <i class="fas fa-save"></i> 保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="createGroupModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-users"></i> 创建群聊</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">群名称</label>
+                        <input type="text" class="form-control" id="groupName" placeholder="输入群名称">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">群描述</label>
+                        <textarea class="form-control" id="groupDesc" placeholder="输入群描述（可选）" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-success" onclick="doCreateGroup()">
+                        <i class="fas fa-plus"></i> 创建
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="joinGroupModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus"></i> 加入群聊</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">群ID</label>
+                        <input type="number" class="form-control" id="joinGroupId" placeholder="输入群ID">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">拉入群的用户</label>
+                        <select class="form-select" id="joinGroupUserSelect">
+                            <option value="">加载中...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-warning" onclick="doJoinGroup()">
+                        <i class="fas fa-plus"></i> 加入
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

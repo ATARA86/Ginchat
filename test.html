@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test - UDP版本</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #output { border: 1px solid #ccc; height: 300px; overflow-y: scroll; margin: 10px 0; padding: 10px; }
+        .green { color: green; }
+        .red { color: red; }
+        .blue { color: blue; }
+    </style>
+</head>
+<body>
+    <h3>WebSocket 测试 - /ws/user 路由</h3>
+    
+    <input type="text" id="userID" placeholder="输入userID" value="1">
+    <button onclick="connect()">连接</button>
+    <button onclick="disconnect()">断开</button>
+    <br><br>
+    <input type="text" id="targetID" placeholder="目标用户ID" value="2">
+    <input type="text" id="message" placeholder="输入消息" style="width: 300px;">
+    <button onclick="sendMessage()">发送</button>
+    
+    <div id="output"></div>
+
+    <script>
+        var ws;
+        
+        function connect() {
+            var userID = document.getElementById("userID").value;
+            if (!userID) {
+                alert("请输入userID");
+                return;
+            }
+            
+            // 使用 /ws/user 路由，需要带 userID 参数
+            ws = new WebSocket("ws://127.0.0.1:8081/ws/user?userID=" + userID);
+            
+            ws.onopen = function() {
+                document.getElementById("output").innerHTML += "<p class='green'>连接成功! userID=" + userID + "</p>";
+            };
+            
+            ws.onmessage = function(event) {
+                document.getElementById("output").innerHTML += "<p>收到: " + event.data + "</p>";
+                // 自动滚动到底部
+                var output = document.getElementById("output");
+                output.scrollTop = output.scrollHeight;
+            };
+            
+            ws.onerror = function(err) {
+                document.getElementById("output").innerHTML += "<p class='red'>错误: " + err + "</p>";
+            };
+            
+            ws.onclose = function() {
+                document.getElementById("output").innerHTML += "<p class='red'>连接已断开</p>";
+            };
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+            }
+        }
+        
+        function sendMessage() {
+            var targetID = document.getElementById("targetID").value;
+            var content = document.getElementById("message").value;
+            
+            if (!ws || ws.readyState != WebSocket.OPEN) {
+                alert("请先连接!");
+                return;
+            }
+            
+            if (!targetID || !content) {
+                alert("请输入目标ID和消息内容");
+                return;
+            }
+            
+            // 构建消息 JSON
+            var msg = {
+                FormID: parseInt(document.getElementById("userID").value),
+                TargetID: parseInt(targetID),
+                Type: 1,  // 私信
+                Media: 1,  // 文字
+                Content: content
+            };
+            
+            ws.send(JSON.stringify(msg));
+            document.getElementById("output").innerHTML += "<p class='blue'>发送: " + JSON.stringify(msg) + "</p>";
+        }
+    </script>
+</body>
+</html>
